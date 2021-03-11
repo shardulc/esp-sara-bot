@@ -1,0 +1,20 @@
+{
+    "auth_file": "auth.json",
+    "command_prefix": "$",
+    "roles": {
+        "admin": "Admin",
+        "security": "Security Director"
+    },
+    "default_scheduled_send_channel": "task-assignment",
+    "approve_channel": "task-approval",
+    "scheduled_message_store": "sched_store.json",
+    "error_messages": {
+        "no_DM": "sorry, this command can't be run from DMs.",
+        "X_not_found": "configuration error: {} '{}' not found. contact Security.",
+        "multiple_X_found": "found multiple {}s named {}, picking one at random.",
+        "need_role": "you need the {} role to run this command.",
+        "schedule_past": "sorry, can't schedule messages in the past.",
+        "config_reload_error": "error reloading config: {}\nold config unchanged.",
+        "reply_to_approve": "you need to reply to an unapproved message to approve it"
+    }
+}
