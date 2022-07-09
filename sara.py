@@ -113,9 +113,20 @@ async def load_stored_scheduled_messages():
             stored = {'messages': []}
             json.dump(stored, f)
 
-    await asyncio.gather(*(send_scheduled_message(message)
-        for message in stored_strings_to_objects(stored['messages'])
-        if 'batch' not in message or not message['batch']))
+    batched = []
+    unbatched = []
+    for message in stored_strings_to_objects(stored['messages']):
+        if 'batch' in message and message['batch']:
+            batched.append(message)
+        else:
+            unbatched.append(message)
+    batched = list_group(stored_strings_to_objects(batched), key=lambda m: m['time'])
+
+    await asyncio.gather(
+        asyncio.gather(*(send_scheduled_message(message)
+            for message in unbatched)),
+        asyncio.gather(*(send_batches_scheduled_messages(time, messages)
+            for time, messages in batched)))
 
 
 def stored_strings_to_objects(stored):
@@ -189,6 +200,8 @@ class Security(commands.Cog):
         self.moderation_queue[queued.id] = ctx.message
         await ctx.message.add_reaction('🦺')
 
+    REQUEST_LEN = len(request.name) + len(config['command_prefix'])
+
     @commands.command(name='approve')
     @commands.has_role(config['roles']['security'])
     async def approve(self, ctx, *args):
@@ -199,10 +212,10 @@ class Security(commands.Cog):
                 orig_msg.author.nick or orig_msg.author.name,
                 orig_msg.channel.mention)
             if len(args) == 0:
-                await send_channel.send('{}{}'.format(orig_msg.content, reference))
+                await send_channel.send('{} {}'.format(orig_msg.content[REQUEST_LEN:], reference))
                 flag = True
             elif args[-1] == 'unchanged':
-                flag = await self.schedule_command(ctx, *args[:-1], orig_msg.content, reference)
+                flag = await self.schedule_command(ctx, *args[:-1], orig_msg.content[REQUEST_LEN:], reference)
             else:
                 flag = await self.schedule_command(ctx, *args, reference)
             if flag:
